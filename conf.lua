@@ -1,0 +1,5 @@
+title = "Hello LowRez"
+author = "Calle Englund"
+shortname = "hello-lowrez"
+version = "0.0.1"
+copyright_message = "Copyright (c) 2019 Calle Englund"
