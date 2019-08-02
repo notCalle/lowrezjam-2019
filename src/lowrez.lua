@@ -82,7 +82,7 @@ function lowrez:load(name)
   local module = require(name)
 
   if module.init then
-    self:activate(module:init(self))
+    self:activate(module:init(self, self:window()))
   else
     self:activate(am.group(module))
   end
