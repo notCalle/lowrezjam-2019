@@ -1,5 +1,6 @@
 local hello = ...
 local fonts = require'fonts'
+local sprites = require'sprites'
 
 function hello:init(lowrez)
   local window = lowrez:window()
@@ -13,5 +14,11 @@ function hello:init(lowrez)
       end
     end)
     ^ am.text(fonts['little-conquest8'],"Hello,\nLowRez!")
+    ,
+    am.rotate(0):action(function(node)
+      node.angle = - 1.0 * am.frame_time
+    end)
+    ^ am.translate(vec2(24,0))
+    ^ am.sprite(sprites.Untitled)
   }
 end
