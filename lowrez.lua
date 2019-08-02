@@ -63,17 +63,18 @@ function lowrez:new(...)
   return setmetatable(... or {}, self)
 end
 
+local _window
 --- Create the singleton window
 function lowrez:window(...)
-  if self._window then return end
+  if _window then return _window end
 
   local opts = ... or {}
   table.merge(opts,{
     width = self.width * self.scale,
     height = self.height * self.scale
   })
-  self._window = am.window(opts)
-  return self._window
+  _window = am.window(opts)
+  return _window
 end
 
 --- Load and activate a scene graph from a module
@@ -86,7 +87,7 @@ end
 
 --- Activate a scene graph
 function lowrez:activate(...)
-  local window = self._window or self:window()
+  local window = self:window()
 
   self.scene = am.group(...)
   window.scene = am.group{
