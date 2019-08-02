@@ -26,6 +26,9 @@ function hello:init(lowrez)
     if window:key_pressed'escape' then
       window:close()
     end
+    if window:key_pressed'space' then
+      lowrez:load'level'
+    end
   end)
 
   return scene
