@@ -5,7 +5,7 @@ local sprites = require'sprites'
 function hello:init(lowrez)
   local window = lowrez:window()
 
-  hello.scene = {
+  local scene = am.group{
     am.circle(vec2(0,0), 32, vec4(0,.5,0,1))
     ,
     am.rotate(0):action(function(node)
@@ -21,4 +21,12 @@ function hello:init(lowrez)
     ^ am.translate(vec2(24,0))
     ^ am.sprite(sprites.Untitled)
   }
+
+  scene:action(function()
+    if window:key_pressed'escape' then
+      window:close()
+    end
+  end)
+
+  return scene
 end

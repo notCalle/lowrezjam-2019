@@ -81,15 +81,20 @@ end
 function lowrez:load(name)
   local module = require(name)
 
-  if module.init then module:init(self) end
-  self:activate(module.scene)
+  if module.init then
+    self:activate(module:init(self))
+  else
+    self:activate(am.group(module))
+  end
+
+  return module
 end
 
 --- Activate a scene graph
 function lowrez:activate(...)
   local window = self:window()
 
-  self.scene = am.group(...)
+  self.scene = ...
   window.scene = am.group{
     am.postprocess(self)^am.scale(self.scale)
     ^ self.scene
