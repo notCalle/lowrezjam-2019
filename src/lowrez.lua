@@ -54,7 +54,7 @@ table.merge(lowrez, {
   width = 64,
   height = 64,
   scale = 8,
-  clear_color = vec4(0,0,0,1),
+  clear_color = vec4(0,0,0,0),
   show_perf_stats = false
 })
 
@@ -95,21 +95,15 @@ function lowrez:activate(...)
   local window = self:window()
 
   self.scene = ...
-  window.scene = am.group{
-    am.postprocess(self)^am.scale(self.scale)
-    ^ self.scene
-    ,
-    am.translate(vec2(window.left-28,window.top+12))
-    ^ am.text("fps",vec4(0,1,0,1),"left","top")
-      :action(function(node)
-        if self.show_perf_stats then
-          node.text = table.tostring(am.perf_stats())
-          node.hidden = false
-        else
-          node.hidden = true
-        end
-      end)
-  }
+  window.scene = am.blend'alpha'
+               ^ am.postprocess(self)
+               ^ am.scale(self.scale)
+               ^ self.scene
+  if self.show_perf_stats then
+    am.show_perf_overlay()
+  else
+    am.hide_perf_overlay()
+  end
 end
 
 function lowrez:__call(tag)
