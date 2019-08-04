@@ -43,10 +43,11 @@ function level:init(lowrez, window)
     background, foreground
   }
 
-  self.player = player:new(self)
+  self.player = player:load()(self)
 
   self.scene:action(function()
     if window:key_pressed'escape' then
+      self.player:save()
       lowrez:load'hello'
     end
     self.player:update()

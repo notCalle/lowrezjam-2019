@@ -12,11 +12,31 @@ function player:new(world, origin, heading)
   local heading = heading or 0
 
   self.world = world
-  self.pos = origin
+  self.pos = vec3(origin.x or 0,origin.y or 0,origin.z or 0)
   self.heading = heading
   self.pitch = 0.0
 
   return self
+end
+
+function player:save(key)
+  key = key or 'player'
+  am.save_state(key, {
+    origin = {
+      x = self.pos.x,
+      y = self.pos.y,
+      z = self.pos.z
+    },
+    heading = self.heading
+  },'json')
+end
+
+function player:load(key)
+  key = key or 'player'
+  local state = am.load_state(key,'json') or {}
+  return function(world, origin, heading)
+    return self:new(world, origin or state.origin, heading or state.heading)
+  end
 end
 
 function player:update()
