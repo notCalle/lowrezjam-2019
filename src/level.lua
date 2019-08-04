@@ -1,72 +1,59 @@
 --- Game level
-
 local level = ...
+table.merge(level,{
+  __index = level
+})
 local fonts = require'fonts'
-local camera = am.lookat(vec3(0,1.1,0),vec3(0,1,-1),vec3(0,1,0))
-local objects = (function()
-  local r=50
-  local y=5
-  return am.bind{
-    pos = am.vec3_array{
-        -r, y, r,
-        r, y, r,
-        -r, -y, -r,
-        r, -y, -r},
-    color = am.vec3_array{
-        0, 0, 0,
-        1, 0, 1,
-        0, 1, 0,
-        .5, .5, .5},
-  }^am.draw("triangles", am.ushort_elem_array{1, 2, 3, 2, 4, 3})
-end)()
+local map = require'map'
+local player = require'player'
+local far = 64
 
-
-local function shader()
-  local vert = [[
-    precision highp float;
-    uniform mat4 MV;
-    uniform mat4 P;
-    attribute vec3 pos;
-    attribute vec3 color;
-    varying vec3 v_color;
-    void main() {
-        v_color = color;
-        gl_Position = P * MV * vec4(pos, 1);
-    }
-  ]]
-  local frag = [[
-    precision mediump float;
-    varying vec3 v_color;
-    void main() {
-        gl_FragColor = vec4(v_color, 1.0);
-    }
-  ]]
-  return am.program(vert,frag)
-end
-
-local function update_camera()
-  local dir = camera.center
-
-  dir = (math.rotate4(5*math.rad(am.delta_time),vec3(0,1,0)) * vec4(dir,0)).xyz
-  camera.center = dir
+function level:update_camera()
+  local pos, dir = self.player:eye()
+  self.camera.eye = pos
+  self.camera.center = pos + dir
 end
 
 function level:init(lowrez, window)
-  local background = am.cull_face'back'^am.use_program(shader())^am.bind{
-    P = math.perspective(math.rad(60),1,0.1,100)
-  }^camera^objects
+  local self = setmetatable({}, self)
+  lowrez.depth_buffer = true
 
+  local camera = am.lookat(vec3(0,1,0),vec3(0,1,-1),vec3(0,1,0))
+  self.camera = camera
+  self.window = window
+  self.map = map:new(camera, far)
+  local ground = self.map.node
 
-  local foreground = am.blend'add_alpha'^am.text'Hello'
+  local background = am.bind{
+    P = math.perspective(math.rad(45),1,0.001,far),
+    light = vec3(0.5,1,1),
+    sky_color = lowrez.clear_color,
+  }^camera^ground
 
-  local scene = background^foreground
+  ground:action(function()
+    ground:update()
+  end)
 
-  scene:action(function()
+  local foreground = am.blend'alpha'
+                   ^ am.translate(vec2(0,28))
+                   ^ am.text(fonts['little-conquest8'],
+                             'Hello, LowRez!',vec4(1,.75,.5,0.9))
+
+  self.scene = am.group{
+    background, foreground
+  }
+
+  self.player = player:new(self)
+
+  self.scene:action(function()
     if window:key_pressed'escape' then
       lowrez:load'hello'
     end
-    update_camera()
+    self.player:update()
+    self:update_camera()
+    local e = camera.eye
+    foreground'text'.text = table.tostring(window:keys_down())
   end)
 
-  return scene
+  return self.scene
 end
