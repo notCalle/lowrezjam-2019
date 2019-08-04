@@ -44,6 +44,8 @@ function level:init(lowrez, window)
   }
 
   self.player = player:load()(self)
+  self:update_camera()
+  self.map:regenerate()
 
   self.scene:action(function()
     if window:key_pressed'escape' then
