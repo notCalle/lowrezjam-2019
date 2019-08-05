@@ -38,16 +38,25 @@ function level:init(lowrez, window)
   local foreground = am.blend'alpha'
   ^am.depth_test'always'
   ^am.group {
-    am.translate(vec2(0,28))
+    am.translate(vec2(-41,41))
     ^am.text(fonts['little-conquest8'],
-             'Hello, LowRez!',vec4(1,.75,.5,0.8))
+             'Hello, LowRez!',vec4(1,.75,.5,0.8),
+             'left','top')
     ,
     am.translate(vec2(23.5,23.5))
     ^am.group{
       am.circle(vec2(0,0),7.5,vec4(.2,.2,.2,.7))
       ,
       am.rotate(0):tag'compass'
-      ^am.rect(-0.5,4.5,0.5,7.5,vec4(1,0,0,.7))
+      ^am.group{
+        am.line(vec2(-1,0),vec2(0,7.5),1,vec4(.7,0,0,1)),
+        am.line(vec2(0,0),vec2(0,4.5),1,vec4(.7,0,0,1)),
+        am.line(vec2(1,0),vec2(0,7.5),1,vec4(.7,0,0,1)),
+
+        am.line(vec2(-1,0),vec2(0,-7.5),1,vec4(.7,.7,.7,1)),
+        am.line(vec2(0,0),vec2(0,-4.5),1,vec4(.7,.7,.7,1)),
+        am.line(vec2(1,0),vec2(0,-7.5),1,vec4(.7,.7,.7,1)),
+      }
     }
   }
 
