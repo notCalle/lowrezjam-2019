@@ -54,8 +54,7 @@ table.merge(lowrez, {
   width = 64,
   height = 64,
   scale = 8,
-  clear_color = vec4(0,0,0,0),
-  show_perf_stats = false
+  clear_color = vec4(0,0,0,0)
 })
 
 --- Create a new lowrez configuration
@@ -99,11 +98,11 @@ function lowrez:activate(...)
                ^ am.postprocess(self)
                ^ am.scale(self.scale)
                ^ self.scene
-  if self.show_perf_stats then
-    am.show_perf_overlay()
-  else
-    am.hide_perf_overlay()
-  end
+  self.scene:action(function()
+    if window:key_pressed'f12' then
+      am.toggle_perf_overlay()
+    end
+  end)
 end
 
 function lowrez:__call(tag)
