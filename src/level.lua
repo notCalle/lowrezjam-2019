@@ -35,9 +35,20 @@ function level:init(lowrez, window)
   end)
 
   local foreground = am.blend'alpha'
-                   ^ am.translate(vec2(0,28))
-                   ^ am.text(fonts['little-conquest8'],
-                             'Hello, LowRez!',vec4(1,.75,.5,0.9))
+  ^am.depth_test'always'
+  ^am.group {
+    am.translate(vec2(0,28))
+    ^am.text(fonts['little-conquest8'],
+             'Hello, LowRez!',vec4(1,.75,.5,0.8))
+    ,
+    am.translate(vec2(23.5,23.5))
+    ^am.group{
+      am.circle(vec2(0,0),7.5,vec4(.2,.2,.2,.7))
+      ,
+      am.rotate(0):tag'compass'
+      ^am.rect(-0.5,4.5,0.5,7.5,vec4(1,0,0,.7))
+    }
+  }
 
   self.scene = am.group{
     background, foreground
@@ -48,14 +59,16 @@ function level:init(lowrez, window)
   self.map:regenerate()
 
   self.scene:action(function()
+    self.player:update()
+    self:update_camera()
+    self.map:update()
+    foreground'text'.text = table.tostring(window:keys_down())
+    foreground'compass'.rotation = quat(self.player.heading)
+
     if window:key_pressed'escape' then
       self.player:save()
       lowrez:load'hello'
     end
-    self.player:update()
-    self:update_camera()
-    local e = camera.eye
-    foreground'text'.text = table.tostring(window:keys_down())
   end)
 
   return self.scene
