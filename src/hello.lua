@@ -11,10 +11,10 @@ function hello:init(lowrez)
               "Hello, LowRez!\n\nPress space\nto start",
               vec4(1,.75,.5,0.9))
   }
+  window.lock_pointer = false
 
   scene:action(function()
     if window:key_pressed'escape' then
-      window.lock_pointer = false
       window:close()
     end
     if window:key_pressed'space' then

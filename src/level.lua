@@ -17,6 +17,7 @@ end
 function level:init(lowrez, window)
   local self = setmetatable({}, self)
   lowrez.depth_buffer = true
+  window.lock_pointer = true
 
   local camera = am.lookat(vec3(0,1,0),vec3(0,1,-1),vec3(0,1,0))
   self.camera = camera
