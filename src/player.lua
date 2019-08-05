@@ -48,6 +48,8 @@ function player:update()
   local speed = self.speed
   local max_s = math.mix(0.5, 1.0, math.clamp(self.pos.y+1.0, 0.0, 1.0))
 
+  if win:key_down'lshift' then max_s = max_s*3 end
+
   if win:key_down'w' then move = move{z = -2*dt} end
   if win:key_down'a' then move = move{x =   -dt} end
   if win:key_down's' then move = move{z =    dt} end
