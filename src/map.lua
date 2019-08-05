@@ -29,10 +29,10 @@ local corner3 = memo(function(pos2)
              + (math.simplex(pos2)^5)
              - (math.simplex(pos2/500)) * 7
   local color =
-    rock > 6 and vec3(1.0)
-    or rock >= soil-0.5 and vec3(0.5, 0.5, 0.5)
-    or soil < 0.1 and vec3(0.7, 0.7, 0.5)
-    or vec3(0.1, 0.5, 0.2)
+    rock > 6 and vec4(1.0,1.0,1.0,0.75)
+    or rock >= soil-0.5 and vec4(0.5,0.5,0.5,0.5)
+    or soil < 0.1 and vec4(0.7,0.7,0.5,0.35)
+    or vec4(0.1,0.5,0.2,0.45)
 
   return {
     vert = vec3(pos2.x, math.max(rock, soil), pos2.y),
@@ -115,7 +115,7 @@ local function update_chunks(self)
   local far = self.far
   local size = far * 2 + 1
   local buffers = am.struct_array(size^2 * 12, {
-    "vert", "vec3", "normal", "vec3", "color", "vec3"
+    "vert", "vec3", "normal", "vec3", "color", "vec4"
   })
   local vert = buffers.vert
   local normal = buffers.normal
@@ -186,13 +186,13 @@ local function shader()
     uniform mat4 P;
     attribute vec3 vert;
     attribute vec3 normal;
-    attribute vec3 color;
+    attribute vec4 color;
     varying vec4 v_color;
     varying vec3 v_pos;
     varying vec3 v_normal;
     void main() {
       v_pos = vert;
-      v_color = vec4(color,1);
+      v_color = color;
       v_normal = normal;
       gl_Position = P * MV * vec4(vert, 1);
     }
@@ -212,7 +212,8 @@ local function shader()
       float dist_a = pow(clamp(dist/far, 0.0, 1.0), 2.0);
       vec3 l = normalize((MV * vec4(light, 0.0)).xyz);
       vec3 nm = normalize((MV * vec4(v_normal, 0.0)).xyz);
-      vec4 c = mix(vec4(0), v_color, 0.25 + 0.75 * dot(nm,l));
+      // Diffuse light, v_color.a is used to mix ambient vs direct light
+      vec4 c = mix(vec4(0), v_color, v_color.a + (1.0-v_color.a) * dot(nm,l));
 
       if (v_pos.y <= 0.0) {
         c = mix(mix(c, vec4(0,0,0,1),
@@ -236,7 +237,7 @@ function map:new(camera, far)
   local self = setmetatable({}, self)
   local size = far * 2 + 1
   local binds = am.struct_array(size^2 * 12, {
-    "vert", "vec3", "normal", "vec3", "color", "vec3"
+    "vert", "vec3", "normal", "vec3", "color", "vec4"
   })
   binds.camera = camera.eye
   binds.far = far
