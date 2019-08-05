@@ -14,6 +14,15 @@ function level:update_camera()
   self.camera.center = pos + dir
 end
 
+local function lighting(time)
+  local s = math.cos(time/30)
+  if s > 0 then
+    return math.mix(vec4(0.7,0.5,0.3,1),vec4(1),s)
+  else
+    return math.mix(vec4(0.7,0.5,0.3,1),vec4(0.4,0.4,0.5,1),-s)
+  end
+end
+
 function level:init(lowrez, window)
   local self = setmetatable({}, self)
   lowrez.depth_buffer = true
@@ -28,12 +37,8 @@ function level:init(lowrez, window)
   local background = am.bind{
     P = math.perspective(math.rad(45),1,0.001,far),
     light = vec3(0.5,1,1),
-    sky_color = lowrez.clear_color,
+    light_color = vec4(1,1,1,1),
   }^camera^ground
-
-  ground:action(function()
-    ground:update()
-  end)
 
   local foreground = am.blend'alpha'
   ^am.depth_test'always'
@@ -69,12 +74,15 @@ function level:init(lowrez, window)
   self.map:regenerate()
 
   self.scene:action(function()
+    local sky_color = vec4(0.3, 0.5, 0.7, 1)
+    local light_color = lighting(am.frame_time)
     self.player:update()
     self:update_camera()
     self.map:update()
     foreground'text'.text = table.tostring(window:keys_down())
     foreground'compass'.rotation = quat(self.player.heading)
-
+    background.light_color = light_color
+    window.clear_color = sky_color * light_color
     if window:key_pressed'escape' then
       self.player:save()
       lowrez:load'hello'

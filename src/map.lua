@@ -202,7 +202,7 @@ local function shader()
     uniform mat4 MV;
     uniform vec3 camera;
     uniform vec3 light;
-    uniform vec4 sky_color;
+    uniform vec4 light_color;
     uniform float far;
     varying vec4 v_color;
     varying vec3 v_pos;
@@ -220,7 +220,7 @@ local function shader()
                                -v_pos.y/3.),
                            vec4(.1,.3,.5,1), 0.6);
       }
-      gl_FragColor = vec4(c.rgb, 1.0-dist_a);
+      gl_FragColor = vec4(c.rgb, 1.0-dist_a) * light_color;
     }
   ]]
   return am.program(vert,frag)

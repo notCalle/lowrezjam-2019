@@ -12,6 +12,7 @@ function hello:init(lowrez)
               vec4(1,.75,.5,0.9))
   }
   window.lock_pointer = false
+  window.clear_color = vec4(0.3, 0.5, 0.7, 1)
 
   scene:action(function()
     if window:key_pressed'escape' then
