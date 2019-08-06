@@ -4,9 +4,18 @@ table.merge(map, {
   __index = map
 })
 
+local function int2(v)
+  local f = math.floor
+  return vec2(f(v.x), f(v.y))
+end
+
 local function int3(v)
   local f = math.floor
   return vec3(f(v.x), f(v.y), f(v.z))
+end
+
+local function normal(v1, v2, v3)
+  return math.normalize(math.cross(v2-v1, v3-v2))
 end
 
 local function memo(fn)
@@ -17,10 +26,10 @@ local function memo(fn)
     local k = tostring(...)
     local v = m[k]
     if not v then
-      v = fn(...)
+      v = {fn(...)}
       m[k] = v
     end
-    return v
+    return unpack(v)
   end
 end
 
@@ -29,41 +38,44 @@ local corner3 = memo(function(pos2)
   local rock = (math.simplex(-pos2/20)^3)*5
              + (math.simplex(pos2)^5)
              - (math.simplex(pos2/500)) * 7
-  local color =
-    rock > 6 and vec4(1.0,1.0,1.0,0.75)
-    or rock >= soil-0.5 and vec4(0.5,0.5,0.5,0.5)
-    or soil < 0.1 and vec4(0.7,0.7,0.5,0.35)
-    or vec4(0.1,0.5,0.2,0.45)
-
-  return {
-    vert = vec3(pos2.x, math.max(rock, soil), pos2.y),
-    color = color
-  }
+  return vec3(pos2.x, math.max(rock, soil), pos2.y), rock, soil
 end)
 
 function map:get(pos2)
-  return corner3(pos2{
-    x = math.floor(pos2.x),
-    y = math.floor(pos2.y)
-  })
+  pos2 = int2(pos2)
+  local v01 = corner3(pos2 + vec2(-1,0))
+  local v10 = corner3(pos2 + vec2(0,-1))
+  local v11,rock,soil = corner3(pos2)
+  local v12 = corner3(pos2 + vec2(0,1))
+  local v21 = corner3(pos2 + vec2(1,0))
+
+  return {
+    vert = v11,
+
+    norm = (normal(v01,v11,v10)
+          + normal(v10,v11,v21)
+          + normal(v21,v11,v12)
+          + normal(v12,v11,v01)) / 4,
+
+    color = rock > 6 and vec4(1.0,1.0,1.0,0.75)
+         or rock >= soil-0.5 and vec4(0.5,0.5,0.5,0.35)
+         or soil < 0.1 and vec4(0.7,0.7,0.5,0.25)
+         or vec4(0.1,0.5,0.2,0.25)
+  }
 end
 
 function map:interpolate(pos2)
     local xf = math.fract(pos2.x)
     local yf = math.fract(pos2.y)
-    local posi = vec2(math.floor(pos2.x),math.floor(pos2.y))
-    local p00 = map:get(posi).vert
-    local p01 = map:get(posi + vec2(0,1)).vert
-    local p10 = map:get(posi + vec2(1,0)).vert
-    local p11 = map:get(posi + vec2(1,1)).vert
+    local posi = int2(pos2)
+    local p00 = corner3(posi)
+    local p01 = corner3(posi + vec2(0,1))
+    local p10 = corner3(posi + vec2(1,0))
+    local p11 = corner3(posi + vec2(1,1))
     return p00 * (1-xf)*(1-yf)
          + p01 * (1-xf)*yf
          + p10 * xf*(1-yf)
          + p11 * xf*yf
-end
-
-local function normal(v1, v2, v3)
-  return math.cross(v2-v1, v3-v2)
 end
 
 function map:update_chunk(pos2, verts, normals, colors)
@@ -76,6 +88,7 @@ function map:update_chunk(pos2, verts, normals, colors)
   c[4] = map:get(pos2 + vec2(1, 0))
   local c0vert = (c[1].vert + c[2].vert + c[3].vert + c[4].vert) / 4
   local c0color = (c[1].color + c[2].color + c[3].color + c[4].color) / 4
+  local c0norm = (c[1].norm + c[2].norm + c[3].norm + c[4].norm) / 4
   local vts = {
     c0vert, c[1].vert, c[2].vert,
     c0vert, c[2].vert, c[3].vert,
@@ -83,21 +96,10 @@ function map:update_chunk(pos2, verts, normals, colors)
     c0vert, c[4].vert, c[1].vert,
   }
   local nms = {
-    normal(c0vert, c[1].vert, c[2].vert),
-    normal(c[1].vert, c[2].vert, c0vert),
-    normal(c[2].vert, c0vert, c[1].vert),
-
-    normal(c0vert, c[2].vert, c[3].vert),
-    normal(c[2].vert, c[3].vert, c0vert),
-    normal(c[3].vert, c0vert, c[2].vert),
-
-    normal(c0vert, c[3].vert, c[4].vert),
-    normal(c[3].vert, c[4].vert, c0vert),
-    normal(c[4].vert, c0vert, c[3].vert),
-
-    normal(c0vert, c[4].vert, c[1].vert),
-    normal(c[4].vert, c[1].vert, c0vert),
-    normal(c[1].vert, c0vert, c[4].vert),
+    c0norm, c[1].norm, c[2].norm,
+    c0norm, c[2].norm, c[3].norm,
+    c0norm, c[3].norm, c[4].norm,
+    c0norm, c[4].norm, c[1].norm,
   }
   local cols = {
     c0color, c[1].color, c[2].color,
