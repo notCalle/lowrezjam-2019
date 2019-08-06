@@ -4,6 +4,13 @@ table.merge(map, {
   __index = map
 })
 
+local shader_struct = {
+    "vert", "vec3",
+    "normal", "vec3",
+    "color", "vec3",
+    "phong", "vec2"
+}
+
 local function int2(v)
   local f = math.floor
   return vec2(f(v.x), f(v.y))
@@ -57,10 +64,19 @@ function map:get(pos2)
           + normal(v21,v11,v12)
           + normal(v12,v11,v01)) / 4,
 
-    color = rock > 6 and vec4(1.0,1.0,1.0,0.75)
-         or rock >= soil-0.5 and vec4(0.5,0.5,0.5,0.35)
-         or soil < 0.1 and vec4(0.7,0.7,0.5,0.25)
-         or vec4(0.1,0.5,0.2,0.25)
+    material = rock > 6 and {     -- snowy montain tops
+      color = vec3(1.0,1.0,1.0),
+      phong = vec2(0,0)
+    } or rock >= soil-0.5 and {   -- mountains
+      color = vec3(0.5,0.5,0.5),
+      phong = vec2(8,0.2)
+    } or soil < 0.1 and {         -- sandy beaches
+      color = vec3(0.7,0.7,0.5),
+      phong = vec2(0,0)
+    } or {                        -- grassy plains
+      color = vec3(0.1,0.5,0.2),
+      phong = vec2(0,0)
+    }
   }
 end
 
@@ -78,7 +94,7 @@ function map:interpolate(pos2)
          + p11 * xf*yf
 end
 
-function map:update_chunk(pos2, verts, normals, colors)
+function map:update_chunk(pos2, verts, normals, colors, phongs)
   local far = self.far
   local size = far * 2 + 1
   local c = {}
@@ -87,7 +103,14 @@ function map:update_chunk(pos2, verts, normals, colors)
   c[3] = map:get(pos2 + vec2(1, 1))
   c[4] = map:get(pos2 + vec2(1, 0))
   local c0vert = (c[1].vert + c[2].vert + c[3].vert + c[4].vert) / 4
-  local c0color = (c[1].color + c[2].color + c[3].color + c[4].color) / 4
+  local c0color = (c[1].material.color
+                 + c[2].material.color
+                 + c[3].material.color
+                 + c[4].material.color) / 4
+  local c0phong = (c[1].material.phong
+                 + c[2].material.phong
+                 + c[3].material.phong
+                 + c[4].material.phong) / 4
   local c0norm = (c[1].norm + c[2].norm + c[3].norm + c[4].norm) / 4
   local vts = {
     c0vert, c[1].vert, c[2].vert,
@@ -102,27 +125,33 @@ function map:update_chunk(pos2, verts, normals, colors)
     c0norm, c[4].norm, c[1].norm,
   }
   local cols = {
-    c0color, c[1].color, c[2].color,
-    c0color, c[2].color, c[3].color,
-    c0color, c[3].color, c[4].color,
-    c0color, c[4].color, c[1].color,
+    c0color, c[1].material.color, c[2].material.color,
+    c0color, c[2].material.color, c[3].material.color,
+    c0color, c[3].material.color, c[4].material.color,
+    c0color, c[4].material.color, c[1].material.color,
+  }
+  local phos = {
+    c0phong, c[1].material.phong, c[2].material.phong,
+    c0phong, c[2].material.phong, c[3].material.phong,
+    c0phong, c[3].material.phong, c[4].material.phong,
+    c0phong, c[4].material.phong, c[1].material.phong,
   }
   local offset = (((pos2.x%size) * size) + pos2.y%size) * 12 + 1
 
   verts:set(vts, offset, 12)
   normals:set(nms, offset, 12)
   colors:set(cols, offset, 12)
+  phongs:set(phos, offset, 12)
 end
 
 local function update_chunks(self)
   local far = self.far
   local size = far * 2 + 1
-  local buffers = am.struct_array(size^2 * 12, {
-    "vert", "vec3", "normal", "vec3", "color", "vec4"
-  })
+  local buffers = am.struct_array(size^2 * 12, shader_struct)
   local vert = buffers.vert
   local normal = buffers.normal
   local color = buffers.color
+  local phong = buffers.phong
   local t0 = os.clock()
   local eye2 = int3(self.camera.eye)
   local queue = self._chunk_queue
@@ -132,7 +161,7 @@ local function update_chunks(self)
     local pos = pull(queue,1)
     local eye = eye2
     while pos do
-      self:update_chunk(pos, vert, normal, color)
+      self:update_chunk(pos, vert, normal, color, phong)
       if (os.clock()-t0 > am.delta_time/2) then
         coroutine.yield()
         t0 = os.clock()
@@ -142,6 +171,7 @@ local function update_chunks(self)
     self.bind.vert:set(vert)
     self.bind.normal:set(normal)
     self.bind.color:set(color)
+    self.bind.phong:set(phong)
 
     eye2 = int3(self.camera.eye)
     while eye == eye2 do
@@ -192,9 +222,7 @@ end
 function map:new(camera, far)
   local self = setmetatable({}, self)
   local size = far * 2 + 1
-  local binds = am.struct_array(size^2 * 12, {
-    "vert", "vec3", "normal", "vec3", "color", "vec4"
-  })
+  local binds = am.struct_array(size^2 * 12, shader_struct)
   binds.camera = camera.eye
   binds.far = far
   self.bind = am.bind(binds)

@@ -17,9 +17,9 @@ end
 local function lighting(time)
   local s = math.cos(time/30)
   if s > 0 then
-    return math.mix(vec4(0.7,0.5,0.3,1),vec4(1),s)
+    return math.mix(vec4(0.7,0.5,0.3,.25),vec4(1,1,1,.25),s)
   else
-    return math.mix(vec4(0.7,0.5,0.3,1),vec4(0.4,0.4,0.5,1),-s)
+    return math.mix(vec4(0.7,0.5,0.3,.25),vec4(0.4,0.4,0.5,.25),-s)
   end
 end
 
@@ -37,7 +37,7 @@ function level:init(lowrez, window)
   local background = am.bind{
     P = math.perspective(math.rad(45),1,0.001,far),
     light = vec3(0.5,1,1),
-    light_color = vec4(1,1,1,1),
+    light_color = vec4(1,1,1,0.25),
   }^camera^ground
 
   local foreground = am.blend'alpha'
