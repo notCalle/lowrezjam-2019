@@ -18,24 +18,24 @@ end
 local rot_axis = math.normalize(vec3(0,-1,1))
 
 local function sun_light(time)
-  local r = time/30
+  local r = time/60
   local s = math.cos(r)
   local v = vec3(0,1,1)*quat(-r,rot_axis)
   if s > 0 then
-    return v, math.mix(vec4(0.6,0.3,0.2,.25),vec4(1.5,1.5,1.5,.35),s)
+    return v, math.mix(vec4(0.6,0.2,0.1,.10),vec4(1.5,1.5,1.5,.05),s)
   else
-    return v, math.mix(vec4(0.6,0.3,0.2,.25),vec4(0,0,0,1),-s)
+    return v, math.mix(vec4(0.6,0.2,0.1,.10),vec4(0,0,0,1),-s)
   end
 end
 
 local function moon_light(time)
-  local r = time/30
+  local r = time/60
   local s = math.cos(r)
-  local v = vec3(0,-1,-1)*quat(-r,rot_axis)
+  local v = vec3(0,-0.7,-1)*quat(-r,rot_axis)
   if s > 0 then
-    return v, math.mix(vec4(0.2,0.1,0.1,.25),vec4(0,0,0,1),s)
+    return v, math.mix(vec4(0.06,0.06,0.07,.10),vec4(0,0,0,1),s)
   else
-    return v, math.mix(vec4(0.2,0.1,0.1,.25),vec4(0.3,0.3,0.6,.35),-s)
+    return v, math.mix(vec4(0.06,0.06,0.07,.10),vec4(0.10,0.10,0.12,.05),-s)
   end
 end
 
@@ -131,7 +131,7 @@ function level:init(lowrez, window)
     foreground'compass'.rotation = quat(self.player.heading)
     foreground'torch'.hidden = self.player.torch == 0.0
 
-    background.torch_color = (vec4(0.5,0.3,0.1,0.9) + math.randvec4()*0.1)
+    background.torch_color = (vec4(0.3,0.25,0.2,0.0) + math.randvec4()*0.05)
                            * self.player.torch
     background.sun_v = sun_v
     background.sun_c = sun_c

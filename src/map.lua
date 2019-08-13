@@ -65,16 +65,16 @@ function map:get(pos2)
           + normal(v12,v11,v01)) / 4,
 
     material = rock > 6 and {     -- snowy montain tops
-      color = vec4(1.0,1.0,1.0,1),
+      color = vec4(1.3,1.4,1.5,1),
       phong = 0.0,
     } or rock >= soil-0.5 and {   -- mountains
-      color = vec4(0.5,0.5,0.55,1),
+      color = vec4(0.25,0.25,0.35,1),
       phong = 0.0,
     } or soil < 0.1 and {         -- sandy beaches
-      color = vec4(0.7,0.7,0.5,1),
+      color = vec4(0.25,0.25,0.15,1),
       phong = 0.0,
     } or {                        -- grassy plains
-      color = vec4(0.1,0.5,0.2,1),
+      color = vec4(0.15,0.25,0.10,1),
       phong = 0.0,
     }
   }

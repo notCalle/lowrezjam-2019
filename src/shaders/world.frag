@@ -40,19 +40,20 @@ vec3 shade(vec4 light, vec4 l_color) {
   // Pretty messy water shading approximation
   if (v_y <= 0.0) {
     float w_spec_coef = (w_shininess + 8.0)/(8.0 + pi);
-    vec4 water_color = vec4(0.2,0.6,1.0,0.7);
+    vec4 water_color = vec4(0.4,0.6,0.9,0.5);
     vec3 w_normal = (MV*vec4(0,1,0,0)).xyz;
+    vec3 w_camera = normalize(v_camera - v_surface);
     float w_diff = mix(max(dot(w_normal, light_v), 0.0), 1.0, l_color.a);
     vec3 w_diff_color = diff_coef * w_diff * water_color.rgb;
+    float fr = pow(distance(v_camera, v_surface)/far, 2.0);
 
     diffuseness = 0.9;
 
     diff_color = mix(diff_color, vec3(0.0), -v_y/3.0);
     diff_color = mix(diff_color, w_diff_color, water_color.a);
 
-    vec3 w_camera = normalize(v_camera - v_surface);
-    halfway_v = normalize(light_v + w_camera);
-    spec = pow(max(dot(w_normal,halfway_v), 0.0), w_shininess)*w_spec_coef;
+    vec3 halfway_w = normalize(light_v + w_camera);
+    spec = pow(max(dot(w_normal,halfway_w), 0.0), w_shininess)*w_spec_coef;
   }
 
   return mix(vec3(spec), diff_color, diffuseness)*l_color.rgb;
@@ -63,7 +64,7 @@ void main() {
   float dist_a = pow(clamp(dist/far, 0.0, 1.0), 2.0);
   vec3 c = shade(MV * vec4(sun_v,0), sun_c)
          + shade(MV * vec4(moon_v,0), moon_c)
-         + shade(vec4(v_camera,1), torch_color/max(1.0,dist/3.0));
+         + shade(vec4(v_camera,1), torch_color/(1.0+dist));
 
-  gl_FragColor = vec4(c, 1.0-dist_a);
+  gl_FragColor = vec4(pow(c,vec3(1.0/2.2)), 1.0-dist_a);
 }
