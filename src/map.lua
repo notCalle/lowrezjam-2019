@@ -7,8 +7,8 @@ table.merge(map, {
 local shader_struct = {
     "vert", "vec3",
     "normal", "vec3",
-    "color", "vec3",
-    "phong", "vec2"
+    "color", "vec4",
+    "shininess", "float"
 }
 
 local function int2(v)
@@ -65,17 +65,17 @@ function map:get(pos2)
           + normal(v12,v11,v01)) / 4,
 
     material = rock > 6 and {     -- snowy montain tops
-      color = vec3(1.0,1.0,1.0),
-      phong = vec2(0,0)
+      color = vec4(1.0,1.0,1.0,1),
+      phong = 0.0,
     } or rock >= soil-0.5 and {   -- mountains
-      color = vec3(0.5,0.5,0.5),
-      phong = vec2(8,0.2)
+      color = vec4(0.5,0.5,0.55,1),
+      phong = 0.0,
     } or soil < 0.1 and {         -- sandy beaches
-      color = vec3(0.7,0.7,0.5),
-      phong = vec2(0,0)
+      color = vec4(0.7,0.7,0.5,1),
+      phong = 0.0,
     } or {                        -- grassy plains
-      color = vec3(0.1,0.5,0.2),
-      phong = vec2(0,0)
+      color = vec4(0.1,0.5,0.2,1),
+      phong = 0.0,
     }
   }
 end
@@ -151,18 +151,19 @@ local function update_chunks(self)
   local vert = buffers.vert
   local normal = buffers.normal
   local color = buffers.color
-  local phong = buffers.phong
+  local phong = buffers.shininess
   local t0 = os.clock()
   local eye2 = int3(self.camera.eye)
   local queue = self._chunk_queue
   local pull = table.remove
+  local max_time = 1/90
 
   while true do
     local pos = pull(queue,1)
     local eye = eye2
     while pos do
       self:update_chunk(pos, vert, normal, color, phong)
-      if (os.clock()-t0 > am.delta_time/2) then
+      if os.clock()-t0 > max_time then
         coroutine.yield()
         t0 = os.clock()
       end
@@ -171,7 +172,7 @@ local function update_chunks(self)
     self.bind.vert:set(vert)
     self.bind.normal:set(normal)
     self.bind.color:set(color)
-    self.bind.phong:set(phong)
+    self.bind.shininess:set(phong)
 
     eye2 = int3(self.camera.eye)
     while eye == eye2 do
@@ -217,6 +218,7 @@ function map:regenerate()
   local far = self.far
   self._chunk_queue = {}
   self:enqueue_chunks(vec2(eye.x-far,eye.z-far), vec2(eye.x+far,eye.z+far))
+  self:update_chunks(true)
 end
 
 function map:new(camera, far)
@@ -224,7 +226,7 @@ function map:new(camera, far)
   local size = far * 2 + 1
   local binds = am.struct_array(size^2 * 12, shader_struct)
   binds.camera = camera.eye
-  binds.far = far
+  binds.far = far-1
   self.bind = am.bind(binds)
   self.camera = camera
   self.far = far

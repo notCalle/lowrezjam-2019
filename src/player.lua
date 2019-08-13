@@ -15,6 +15,7 @@ function player:new(world, origin, heading)
   self.pos = vec3(origin.x or 0,origin.y or 0,origin.z or 0)
   self.heading = heading
   self.pitch = 0.0
+  self.torch = 0.0
 
   return self
 end
@@ -56,6 +57,8 @@ function player:update()
   if win:key_down'd' then move = move{x =    dt} end
 
   if win:key_pressed'space' then move = move{y = 2} end
+
+  if win:key_pressed't' then self.torch = 1.0 - self.torch end
 
   if move.x == 0 then move = move{x = -math.sign(speed.x)*dt} end
   if move.z == 0 then move = move{z = -math.sign(speed.z)*dt} end
